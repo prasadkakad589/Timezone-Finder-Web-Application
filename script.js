@@ -1,3 +1,4 @@
+console.log("JS Loaded");
 const API_KEY = "f178f16486db43f88e6a41cd746b216b"; 
 
 // Step 3: Get Current Location
