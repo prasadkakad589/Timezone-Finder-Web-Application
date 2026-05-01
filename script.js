@@ -1,27 +1,38 @@
-console.log("JS Loaded");
-const API_KEY = "f178f16486db43f88e6a41cd746b216b"; 
+const API_KEY = "ded72fa136634a108397ceab0b748b9e";
 
-// Step 3: Get Current Location
-navigator.geolocation.getCurrentPosition(
-  (pos) => {
-    let lat = pos.coords.latitude;
-    let lon = pos.coords.longitude;
-    getTimezone(lat, lon, "current");
-  },
-  () => {
-    document.getElementById("current").innerText = "Permission denied!";
+// Run after page loads
+window.onload = function () {
+
+  if (!navigator.geolocation) {
+    document.getElementById("current").innerText = "Geolocation not supported";
+    return;
   }
-);
 
-// Fetch timezone using lat/lon
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      console.log("Location fetched");
+
+      let lat = pos.coords.latitude;
+      let lon = pos.coords.longitude;
+
+      getTimezone(lat, lon, "current");
+    },
+    (err) => {
+      console.log("Location Error:", err);
+      document.getElementById("current").innerText = "Location permission denied";
+    }
+  );
+};
+
+// ✅ Correct API (reverse geocode)
 function getTimezone(lat, lon, target) {
   fetch(`https://api.geoapify.com/v1/geocode/reverse?lat=${lat}&lon=${lon}&apiKey=${API_KEY}`)
     .then(res => res.json())
     .then(data => {
-      console.log(data);
+      console.log("API Response:", data);
 
       if (!data.features || data.features.length === 0) {
-        document.getElementById(target).innerText = "No data found";
+        document.getElementById(target).innerText = "No timezone found";
         return;
       }
 
@@ -30,24 +41,25 @@ function getTimezone(lat, lon, target) {
       document.getElementById(target).innerText =
         tz.name + " (UTC " + tz.offset_STD + ")";
     })
-    .catch(() => {
+    .catch(err => {
+      console.log("Fetch Error:", err);
       document.getElementById(target).innerText = "Error fetching timezone";
     });
 }
-// Step 4: Address → Timezone
+
+// Address search
 function getTimezoneByAddress() {
   let address = document.getElementById("address").value;
 
   if (address === "") {
-    document.getElementById("result").innerText = "Please enter an address";
+    document.getElementById("result").innerText = "Please enter address";
     return;
   }
 
-  // Geocoding API
   fetch(`https://api.geoapify.com/v1/geocode/search?text=${address}&apiKey=${API_KEY}`)
     .then(res => res.json())
     .then(data => {
-      if (data.features.length === 0) {
+      if (!data.features || data.features.length === 0) {
         document.getElementById("result").innerText = "Address not found";
         return;
       }
@@ -57,7 +69,8 @@ function getTimezoneByAddress() {
 
       getTimezone(lat, lon, "result");
     })
-    .catch(() => {
+    .catch(err => {
+      console.log(err);
       document.getElementById("result").innerText = "Error fetching location";
     });
 }
